@@ -21,11 +21,13 @@ Build and maintain a local GPU price tracker (Express + SQLite) with:
 - Scraper behavior:
    - Uses `ecshweb.pchome.com.tw/search/v3.3/all/results?q=` to fetch JSON product lists.
    - Pages results and filters products by tokenized keywords (server-side `parseFilterTokens`).
+   - Skips scraped items whose names exceed 100 characters (not inserted).
    - Inserts today's price rows while avoiding exact-duplicate entries.
 - Frontend controls:
    - Manual scrape input (`search-input`) to pass simple model keywords (e.g., `5070 5080 5090`).
    - Chart controls: `range-start`, `range-end`, `chart-filter`, and `chart-agg` (min/avg/max).
    - Table filter: `table-filter` for client-side row filtering.
+   - Table pagination: 10 rows per page with prev/next and page jump controls.
 
 ## Data Model
 Table: `prices`

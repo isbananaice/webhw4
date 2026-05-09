@@ -9,9 +9,16 @@ const chartAggSelect = document.getElementById("chart-agg");
 const tableFilterInput = document.getElementById("table-filter");
 const chartCanvas = document.getElementById("price-chart");
 const scrapeButton = document.getElementById("scrape-btn");
+const tablePrevButton = document.getElementById("table-prev");
+const tableNextButton = document.getElementById("table-next");
+const tablePageInput = document.getElementById("table-page-input");
+const tablePageGo = document.getElementById("table-page-go");
+const tablePageLabel = document.getElementById("table-page-label");
 
 const formatPrice = (value) => Number(value).toLocaleString("zh-TW");
 let cachedRows = [];
+let tablePage = 1;
+const tablePageSize = 10;
 
 const parseDateValue = (value) => {
   if (!value) {
@@ -148,6 +155,43 @@ const renderRows = (rows) => {
     `;
     tableBody.appendChild(tr);
   });
+};
+
+const getTableTotalPages = (rows) =>
+  Math.max(1, Math.ceil(rows.length / tablePageSize));
+
+const clampTablePage = (value, totalPages) => {
+  if (!Number.isFinite(value) || value < 1) {
+    return 1;
+  }
+  if (value > totalPages) {
+    return totalPages;
+  }
+  return Math.floor(value);
+};
+
+const updateTablePaginationUI = (page, totalPages) => {
+  if (tablePageLabel) {
+    tablePageLabel.textContent = `${page} / ${totalPages}`;
+  }
+
+  if (tablePrevButton) {
+    tablePrevButton.disabled = page <= 1;
+  }
+
+  if (tableNextButton) {
+    tableNextButton.disabled = page >= totalPages;
+  }
+};
+
+const renderTablePage = () => {
+  const filteredRows = filterRowsForTable(cachedRows);
+  const totalPages = getTableTotalPages(filteredRows);
+  tablePage = clampTablePage(tablePage, totalPages);
+  const startIndex = (tablePage - 1) * tablePageSize;
+  const pageRows = filteredRows.slice(startIndex, startIndex + tablePageSize);
+  renderRows(pageRows);
+  updateTablePaginationUI(tablePage, totalPages);
 };
 
 const renderChart = (rows) => {
@@ -345,7 +389,7 @@ const fetchPrices = async () => {
   const data = await response.json();
   cachedRows = data;
   syncRangeBounds(cachedRows);
-  renderRows(filterRowsForTable(cachedRows));
+  renderTablePage();
   renderChart(filterRowsForChart(cachedRows));
 };
 
@@ -425,7 +469,33 @@ if (chartAggSelect) {
 
 if (tableFilterInput) {
   tableFilterInput.addEventListener("input", () => {
-    renderRows(filterRowsForTable(cachedRows));
+    tablePage = 1;
+    renderTablePage();
+  });
+}
+
+if (tablePrevButton) {
+  tablePrevButton.addEventListener("click", () => {
+    tablePage = Math.max(1, tablePage - 1);
+    renderTablePage();
+  });
+}
+
+if (tableNextButton) {
+  tableNextButton.addEventListener("click", () => {
+    tablePage += 1;
+    renderTablePage();
+  });
+}
+
+if (tablePageGo) {
+  tablePageGo.addEventListener("click", () => {
+    if (!tablePageInput) {
+      return;
+    }
+    const nextPage = Number(tablePageInput.value);
+    tablePage = nextPage;
+    renderTablePage();
   });
 }
 

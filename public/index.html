@@ -80,6 +80,21 @@
               <span>顯卡型號篩選</span>
               <input type="text" id="table-filter" placeholder="輸入型號關鍵字" />
             </label>
+            <div class="pagination">
+              <button type="button" class="secondary" id="table-prev">上一頁</button>
+              <span class="page-label" id="table-page-label">1 / 1</span>
+              <div class="page-jump">
+                <input
+                  type="number"
+                  id="table-page-input"
+                  min="1"
+                  step="1"
+                  placeholder="頁數"
+                />
+                <button type="button" class="secondary" id="table-page-go">前往</button>
+              </div>
+              <button type="button" class="secondary" id="table-next">下一頁</button>
+            </div>
           </div>
           <table>
             <thead>

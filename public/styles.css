@@ -234,13 +234,52 @@ body {
 
 .table-controls {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
   margin-bottom: 12px;
 }
 
 .table-controls .field {
   max-width: 240px;
   width: 100%;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.page-label {
+  font-size: 0.9rem;
+  color: #d2dfdb;
+  min-width: 64px;
+  text-align: center;
+}
+
+.page-jump {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.page-jump input {
+  width: 90px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #0f1d20;
+  color: var(--mist);
+  font-size: 0.9rem;
+}
+
+.page-jump input:focus {
+  outline: none;
+  border-color: var(--lime);
+  box-shadow: 0 0 0 3px rgba(217, 244, 109, 0.2);
 }
 
 table {
@@ -305,5 +344,13 @@ tbody tr:hover {
 
   table {
     min-width: 420px;
+  }
+
+  .table-controls {
+    align-items: stretch;
+  }
+
+  .pagination {
+    justify-content: flex-start;
   }
 }

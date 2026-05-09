@@ -13,6 +13,7 @@ const scrapeSearchBaseUrl =
   "https://ecshweb.pchome.com.tw/search/v3.3/all/results";
 const scrapeLimit = Number(process.env.SCRAPE_LIMIT || 40);
 const scrapePageLimit = Number(process.env.SCRAPE_PAGE_LIMIT || 3);
+const scrapeNameLimit = Number(process.env.SCRAPE_NAME_LIMIT || 100);
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -145,6 +146,10 @@ const scrapePchomeApi = async (tokens = []) => {
 
       const name = cleanText(String(entry.name || entry.Name || ""));
       const price = extractPriceValue(entry.price || entry.Price || entry.PRICE);
+
+      if (name.length > scrapeNameLimit) {
+        continue;
+      }
 
       if (name && Number.isFinite(price) && matchesFilter(name, tokens)) {
         items.push({ name, price });
