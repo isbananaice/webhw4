@@ -113,11 +113,14 @@ const buildModelRegex = (token) => {
 
 const matchesFilter = (name, tokens) => {
   if (!tokens.length) {
-    return true;
+    return name.includes("顯示卡");
   }
 
   const normalizedName = normalizeModelToken(name);
   return tokens.some((token) => {
+    if (!name.includes("顯示卡")) {
+      return false;
+    }
     if (!isModelToken(token)) {
       return false;
     }
