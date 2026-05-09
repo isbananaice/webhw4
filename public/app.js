@@ -14,11 +14,14 @@ const tableNextButton = document.getElementById("table-next");
 const tablePageInput = document.getElementById("table-page-input");
 const tablePageGo = document.getElementById("table-page-go");
 const tablePageLabel = document.getElementById("table-page-label");
+const modelOptions = document.getElementById("model-options");
 
 const formatPrice = (value) => Number(value).toLocaleString("zh-TW");
 let cachedRows = [];
 let tablePage = 1;
 const tablePageSize = 10;
+let modelTokenSet = new Set();
+let normalizedModelTokenSet = new Set();
 
 const parseFilterTokens = (value) =>
   String(value || "")
@@ -26,8 +29,63 @@ const parseFilterTokens = (value) =>
     .map((token) => token.trim())
     .filter(Boolean);
 
-const isGpuModelToken = (token) =>
-  /^(?:rtx|rx)?\d{3,5}(?:ti|xt|super)?$/i.test(token);
+const normalizeModelToken = (value) =>
+  String(value || "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+
+const formatModelToken = (prefix, digits, suffix) => {
+  const normalizedPrefix = prefix ? prefix.toUpperCase() : "";
+  const normalizedSuffix = suffix ? suffix.toUpperCase() : "";
+  const base = normalizedPrefix ? `${normalizedPrefix} ${digits}` : digits;
+  return normalizedSuffix ? `${base} ${normalizedSuffix}` : base;
+};
+
+const extractModelTokens = (name) => {
+  const tokens = [];
+  const regex = /(?:(RTX|RX)\s*)?(\d{3,5})\s*(TI|XT|SUPER)?/gi;
+  let match = null;
+  while ((match = regex.exec(name)) !== null) {
+    const [, prefix, digits, suffix] = match;
+    if (!digits) {
+      continue;
+    }
+
+    tokens.push(digits);
+    if (prefix || suffix) {
+      tokens.push(formatModelToken(prefix, digits, suffix));
+    }
+  }
+  return tokens;
+};
+
+const updateModelOptions = (rows) => {
+  if (!modelOptions) {
+    return;
+  }
+
+  const tokens = new Set();
+  rows.forEach((row) => {
+    const name = String(row.name || "");
+    extractModelTokens(name).forEach((token) => tokens.add(token));
+  });
+
+  const sortedTokens = Array.from(tokens).sort((a, b) =>
+    a.localeCompare(b, "en", { numeric: true })
+  );
+
+  modelTokenSet = new Set(sortedTokens);
+  normalizedModelTokenSet = new Set(
+    sortedTokens.map((token) => normalizeModelToken(token))
+  );
+
+  modelOptions.innerHTML = "";
+  sortedTokens.forEach((token) => {
+    const option = document.createElement("option");
+    option.value = token;
+    modelOptions.appendChild(option);
+  });
+};
 
 const parseDateValue = (value) => {
   if (!value) {
@@ -397,6 +455,7 @@ const fetchPrices = async () => {
   const response = await fetch("/api/prices");
   const data = await response.json();
   cachedRows = data;
+  updateModelOptions(cachedRows);
   syncRangeBounds(cachedRows);
   renderTablePage();
   renderChart(filterRowsForChart(cachedRows));
@@ -434,9 +493,11 @@ if (scrapeButton) {
     scrapeButton.textContent = "抓取中...";
     const filter = searchInput ? searchInput.value.trim() : "";
     const tokens = parseFilterTokens(filter);
-    const hasInvalidToken = tokens.some((token) => !isGpuModelToken(token));
-    if (hasInvalidToken) {
-      alert("請只輸入顯卡型號（例如：5070、5080、5090）。");
+    const hasInvalidToken = tokens.some((token) =>
+      !normalizedModelTokenSet.has(normalizeModelToken(token))
+    );
+    if (tokens.length && hasInvalidToken) {
+      alert("請從清單中選擇顯卡型號，避免輸入其他字詞。");
       scrapeButton.disabled = false;
       scrapeButton.textContent = originalLabel;
       return;

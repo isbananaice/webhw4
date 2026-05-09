@@ -33,7 +33,13 @@
           <div class="form-actions">
             <label class="field inline-field">
               <span>搜尋顯卡型號</span>
-              <input type="text" id="search-input" placeholder="5070 / 5080 / 5090" />
+              <input
+                type="text"
+                id="search-input"
+                list="model-options"
+                placeholder="5070 / 5080 / 5090"
+              />
+              <datalist id="model-options"></datalist>
             </label>
             <button type="button" id="scrape-btn" class="secondary">抓取最新價格</button>
           </div>
