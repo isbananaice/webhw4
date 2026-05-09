@@ -264,8 +264,9 @@ const renderTablePage = () => {
 const renderChart = (rows) => {
   const ctx = chartCanvas.getContext("2d");
   const pixelRatio = window.devicePixelRatio || 1;
-  const width = chartCanvas.clientWidth;
-  const height = chartCanvas.height;
+  const rect = chartCanvas.getBoundingClientRect();
+  const width = rect.width || chartCanvas.clientWidth;
+  const height = rect.height || chartCanvas.clientHeight;
 
   chartCanvas.width = Math.floor(width * pixelRatio);
   chartCanvas.height = Math.floor(height * pixelRatio);

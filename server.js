@@ -56,13 +56,43 @@ const parseFilterTokens = (value) =>
     .map((token) => token.trim())
     .filter(Boolean);
 
+const normalizeModelToken = (value) =>
+  String(value || "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+
+const isModelToken = (value) =>
+  /^(?:RTX|RX)?\d{3,5}(?:TI|XT|SUPER)?$/i.test(value);
+
+const buildModelRegex = (token) => {
+  const normalized = normalizeModelToken(token);
+  if (!normalized) {
+    return null;
+  }
+
+  const match = normalized.match(/^(RTX|RX)?(\d{3,5})(TI|XT|SUPER)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  const [, prefix, digits, suffix] = match;
+  const prefixPart = prefix ? prefix : "(?:RTX|RX)";
+  const suffixPart = suffix ? `\s*${suffix}` : "(?:\s*(?:TI|XT|SUPER))?";
+  return new RegExp(`${prefixPart}\s*${digits}${suffixPart}`, "i");
+};
+
 const matchesFilter = (name, tokens) => {
   if (!tokens.length) {
     return true;
   }
 
-  const lowerName = name.toLowerCase();
-  return tokens.some((token) => lowerName.includes(token.toLowerCase()));
+  return tokens.some((token) => {
+    if (!isModelToken(token)) {
+      return false;
+    }
+    const pattern = buildModelRegex(token);
+    return pattern ? pattern.test(name) : false;
+  });
 };
 
 const fetchText = async (url) => {

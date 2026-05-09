@@ -23,11 +23,13 @@ Build and maintain a local GPU price tracker (Express + SQLite) with:
    - Pages results and filters products by tokenized keywords (server-side `parseFilterTokens`).
    - Skips scraped items whose names exceed 100 characters (not inserted).
    - Inserts today's price rows while avoiding exact-duplicate entries.
+   - Uses stricter GPU model matching (RTX/RX patterns) to avoid unrelated items.
 - Frontend controls:
-   - Manual scrape input (`search-input`) to pass simple model keywords (e.g., `5070 5080 5090`).
+   - Manual scrape input (`search-input`) with model suggestion list; only accepts known GPU model tokens.
    - Chart controls: `range-start`, `range-end`, `chart-filter`, and `chart-agg` (min/avg/max).
    - Table filter: `table-filter` for client-side row filtering.
    - Table pagination: 10 rows per page with prev/next and page jump controls.
+   - Chart rendering uses a fixed canvas height to avoid resizing during re-render.
 
 ## Data Model
 Table: `prices`
@@ -48,7 +50,6 @@ Table: `prices`
 
 ## Known Issues / Next Steps
 - Frontend `chart-filter` needs tokenized matching (split on whitespace/comma) so inputs like `5070 5080 5090` match any token — planned change in `public/app.js`.
-- Scrape input should only accept GPU model tokens (e.g., `5070`, `5080`, `5090`) and skip search when other words appear.
 - Ensure server is restarted after edits to `server.js` so `/api/scrape` uses the latest scraper logic.
 - Add more robust logging for scraper failures and rate-limit handling.
 
