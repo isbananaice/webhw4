@@ -23,9 +23,11 @@ Build and maintain a local GPU price tracker (Express + SQLite) with:
    - Pages results and filters products by tokenized keywords (server-side `parseFilterTokens`).
    - Skips scraped items whose names exceed 100 characters (not inserted).
    - Inserts today's price rows while avoiding exact-duplicate entries.
-   - Uses stricter GPU model matching (RTX/RX patterns) to avoid unrelated items.
+   - Uses stricter GPU model matching (RTX/RX/GTX + Intel Arc) with hyphen/space-aware patterns.
+   - Expands model tokens into GPU-focused queries (adds `顯示卡` keyword to reduce noise).
+   - Accepts series tokens (e.g., `30系列`, `40系`) and matches any 30xx/40xx models.
 - Frontend controls:
-   - Manual scrape input (`search-input`) with model suggestion list; only accepts known GPU model tokens.
+   - Manual scrape input (`search-input`) validates GPU model tokens and series tokens.
    - Chart controls: `range-start`, `range-end`, `chart-filter`, and `chart-agg` (min/avg/max).
    - Table filter: `table-filter` for client-side row filtering.
    - Table pagination: 10 rows per page with prev/next and page jump controls.

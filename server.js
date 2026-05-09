@@ -61,9 +61,24 @@ const normalizeModelToken = (value) =>
     .replace(/\s+/g, "")
     .toUpperCase();
 
+const normalizeSeriesToken = (value) =>
+  String(value || "")
+    .replace(/\s+/g, "")
+    .replace(/顯示?卡/g, "")
+    .toUpperCase();
+
+const parseSeriesDigits = (value) => {
+  const token = normalizeSeriesToken(value);
+  const match = token.match(/^(?:RTX|RX|GTX)?(\d{2})(?:SERIES|系列|系)?$/i);
+  return match ? match[1] : null;
+};
+
+const isSeriesToken = (value) => Boolean(parseSeriesDigits(value));
+
 const isModelToken = (value) =>
   /^(?:RTX|RX|GTX)?\d{3,5}(?:TI|XT|SUPER)?$/i.test(value) ||
-  /^(?:ARC)?[AB]\d{2,3}$/i.test(value);
+  /^(?:ARC)?[AB]\d{2,3}$/i.test(value) ||
+  isSeriesToken(value);
 
 const buildModelRegex = (token) => {
   const normalized = normalizeModelToken(token);
@@ -71,10 +86,17 @@ const buildModelRegex = (token) => {
     return null;
   }
 
+  const seriesDigits = parseSeriesDigits(token);
+  if (seriesDigits) {
+    const sep = "[-\\s]*";
+    return new RegExp(`(?:RTX|RX|GTX)?${sep}${seriesDigits}\\d{2}(?:${sep}(?:TI|XT|SUPER))?`, "i");
+  }
+
   const arcMatch = normalized.match(/^(?:ARC)?([AB])(\d{2,3})$/i);
   if (arcMatch) {
     const [, series, digits] = arcMatch;
-    return new RegExp(`ARC\s*${series}\s*${digits}`, "i");
+    const sep = "[-\\s]*";
+    return new RegExp(`ARC${sep}${series}${sep}${digits}`, "i");
   }
 
   const match = normalized.match(/^(RTX|RX|GTX)?(\d{3,5})(TI|XT|SUPER)?$/i);
@@ -84,8 +106,9 @@ const buildModelRegex = (token) => {
 
   const [, prefix, digits, suffix] = match;
   const prefixPart = prefix ? prefix : "(?:RTX|RX|GTX)?";
-  const suffixPart = suffix ? `\s*${suffix}` : "(?:\s*(?:TI|XT|SUPER))?";
-  return new RegExp(`${prefixPart}\s*${digits}${suffixPart}`, "i");
+  const sep = "[-\\s]*";
+  const suffixPart = suffix ? `${sep}${suffix}` : `(?:${sep}(?:TI|XT|SUPER))?`;
+  return new RegExp(`${prefixPart}${sep}${digits}${suffixPart}`, "i");
 };
 
 const matchesFilter = (name, tokens) => {
@@ -93,13 +116,58 @@ const matchesFilter = (name, tokens) => {
     return true;
   }
 
+  const normalizedName = normalizeModelToken(name);
   return tokens.some((token) => {
     if (!isModelToken(token)) {
       return false;
     }
     const pattern = buildModelRegex(token);
-    return pattern ? pattern.test(name) : false;
+    if (pattern && pattern.test(name)) {
+      return true;
+    }
+
+    const normalizedToken = normalizeModelToken(token);
+    return normalizedToken ? normalizedName.includes(normalizedToken) : false;
   });
+};
+
+const buildQueryTokens = (tokens) => {
+  if (!tokens.length) {
+    return ["顯示卡"];
+  }
+
+  const queries = [];
+  tokens.forEach((token) => {
+    const seriesDigits = parseSeriesDigits(token);
+    if (seriesDigits) {
+      queries.push(`RTX ${seriesDigits}`);
+      queries.push(`RTX ${seriesDigits} 顯示卡`);
+      queries.push(`${seriesDigits} 系列`);
+      queries.push(`${seriesDigits} 系列 顯示卡`);
+      return;
+    }
+
+    const normalized = normalizeModelToken(token);
+    const match = normalized.match(/^(RTX|RX|GTX)?(\d{3,5})(TI|XT|SUPER)?$/i);
+    if (match) {
+      const [, prefix, digits, suffix] = match;
+      if (prefix) {
+        queries.push(`${prefix} ${digits}`);
+        queries.push(`${prefix} ${digits} 顯示卡`);
+      }
+      queries.push(digits);
+      queries.push(`${digits} 顯示卡`);
+      queries.push(`${digits} 顯卡`);
+      if (suffix) {
+        queries.push(`${digits} ${suffix}`);
+        queries.push(`${digits} ${suffix} 顯示卡`);
+      }
+    }
+
+    queries.push(token);
+  });
+
+  return Array.from(new Set(queries));
 };
 
 const fetchText = async (url) => {
@@ -162,7 +230,7 @@ const extractPriceValue = (price) => {
 const scrapePchomeApi = async (tokens = []) => {
   const items = [];
   const sources = [];
-  const queryTokens = tokens.length ? tokens : ["顯示卡"];
+  const queryTokens = buildQueryTokens(tokens);
   const seen = new Set();
   let totalPages = 0;
 

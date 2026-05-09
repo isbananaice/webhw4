@@ -31,6 +31,20 @@ const normalizeModelToken = (value) =>
     .replace(/\s+/g, "")
     .toUpperCase();
 
+const normalizeSeriesToken = (value) =>
+  String(value || "")
+    .replace(/\s+/g, "")
+    .replace(/顯示?卡/g, "")
+    .toUpperCase();
+
+const parseSeriesDigits = (value) => {
+  const token = normalizeSeriesToken(value);
+  const match = token.match(/^(?:RTX|RX|GTX)?(\d{2})(?:SERIES|系列|系)?$/i);
+  return match ? match[1] : null;
+};
+
+const isGpuSeriesToken = (value) => Boolean(parseSeriesDigits(value));
+
 const isGpuModelToken = (value) => {
   const token = normalizeModelToken(value);
   if (!token) {
@@ -45,7 +59,7 @@ const isGpuModelToken = (value) => {
     return true;
   }
 
-  return false;
+  return isGpuSeriesToken(value);
 };
 
 const parseDateValue = (value) => {
