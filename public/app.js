@@ -179,7 +179,10 @@ const renderRows = (rows) => {
 
   if (!rows.length) {
     const empty = document.createElement("tr");
-    empty.innerHTML = "<td colspan=\"4\">目前沒有資料。</td>";
+    const cell = document.createElement("td");
+    cell.colSpan = 4;
+    cell.textContent = "目前沒有資料。";
+    empty.appendChild(cell);
     tableBody.appendChild(empty);
     return;
   }
@@ -187,14 +190,30 @@ const renderRows = (rows) => {
   rows.forEach((row) => {
     const numericId = Number(row.id);
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.date}</td>
-      <td>${row.name}</td>
-      <td class=\"num\">${formatPrice(row.price)}</td>
-      <td class=\"action\">
-        <button type=\"button\" class=\"delete-btn\" data-id=\"${Number.isFinite(numericId) ? numericId : ""}\">刪除</button>
-      </td>
-    `;
+
+    const dateCell = document.createElement("td");
+    dateCell.textContent = row.date;
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent = row.name;
+
+    const priceCell = document.createElement("td");
+    priceCell.className = "num";
+    priceCell.textContent = formatPrice(row.price);
+
+    const actionCell = document.createElement("td");
+    actionCell.className = "action";
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-btn";
+    deleteButton.dataset.id = Number.isFinite(numericId) ? String(numericId) : "";
+    deleteButton.textContent = "刪除";
+    actionCell.appendChild(deleteButton);
+
+    tr.appendChild(dateCell);
+    tr.appendChild(nameCell);
+    tr.appendChild(priceCell);
+    tr.appendChild(actionCell);
     tableBody.appendChild(tr);
   });
 };
