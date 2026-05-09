@@ -83,7 +83,7 @@ const buildModelRegex = (token) => {
   }
 
   const [, prefix, digits, suffix] = match;
-  const prefixPart = prefix ? prefix : "(?:RTX|RX|GTX)";
+  const prefixPart = prefix ? prefix : "(?:RTX|RX|GTX)?";
   const suffixPart = suffix ? `\s*${suffix}` : "(?:\s*(?:TI|XT|SUPER))?";
   return new RegExp(`${prefixPart}\s*${digits}${suffixPart}`, "i");
 };
@@ -161,45 +161,68 @@ const extractPriceValue = (price) => {
 
 const scrapePchomeApi = async (tokens = []) => {
   const items = [];
-  const query = tokens.length ? tokens.join(" ") : "顯示卡";
-  const paramsBase = `q=${encodeURIComponent(query)}&sort=sale/dc`;
-  let totalPages = 1;
-  let page = 1;
+  const sources = [];
+  const queryTokens = tokens.length ? tokens : ["顯示卡"];
+  const seen = new Set();
+  let totalPages = 0;
 
-  while (page <= totalPages && page <= scrapePageLimit && items.length < scrapeLimit) {
-    const url = `${scrapeSearchBaseUrl}?${paramsBase}&page=${page}`;
-    const data = await fetchJson(url);
-    totalPages = Number(data.totalPage || 1);
-
-    const prods = Array.isArray(data.prods) ? data.prods : [];
-    for (const entry of prods) {
-      if (items.length >= scrapeLimit) {
-        break;
-      }
-
-      if (!entry || typeof entry !== "object") {
-        continue;
-      }
-
-      const name = cleanText(String(entry.name || entry.Name || ""));
-      const price = extractPriceValue(entry.price || entry.Price || entry.PRICE);
-
-      if (name.length > scrapeNameLimit) {
-        continue;
-      }
-
-      if (name && Number.isFinite(price) && matchesFilter(name, tokens)) {
-        items.push({ name, price });
-      }
+  for (const queryToken of queryTokens) {
+    if (items.length >= scrapeLimit) {
+      break;
     }
 
-    page += 1;
+    const query = queryToken;
+    const paramsBase = `q=${encodeURIComponent(query)}&sort=sale/dc`;
+    let page = 1;
+    let pageTotal = 1;
+
+    while (page <= pageTotal && page <= scrapePageLimit && items.length < scrapeLimit) {
+      const url = `${scrapeSearchBaseUrl}?${paramsBase}&page=${page}`;
+      const data = await fetchJson(url);
+      pageTotal = Number(data.totalPage || 1);
+      totalPages = Math.max(totalPages, pageTotal);
+      if (!sources.includes(url)) {
+        sources.push(url);
+      }
+
+      const prods = Array.isArray(data.prods) ? data.prods : [];
+      for (const entry of prods) {
+        if (items.length >= scrapeLimit) {
+          break;
+        }
+
+        if (!entry || typeof entry !== "object") {
+          continue;
+        }
+
+        const name = cleanText(String(entry.name || entry.Name || ""));
+        const price = extractPriceValue(entry.price || entry.Price || entry.PRICE);
+
+        if (!name || name.length > scrapeNameLimit || !Number.isFinite(price)) {
+          continue;
+        }
+
+        if (!matchesFilter(name, tokens)) {
+          continue;
+        }
+
+        const key = `${name}::${price}`;
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        items.push({ name, price });
+      }
+
+      page += 1;
+    }
   }
 
   return {
     items,
-    source: `${scrapeSearchBaseUrl}?${paramsBase}`,
-    query,
+    source: sources.join(", "),
+    query: queryTokens.join(" "),
     pages: Math.min(totalPages, scrapePageLimit)
   };
 };
