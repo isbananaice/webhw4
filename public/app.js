@@ -466,9 +466,16 @@ if (scrapeButton) {
     const originalLabel = scrapeButton.textContent;
     scrapeButton.disabled = true;
     scrapeButton.textContent = "抓取中...";
-    const filter = searchInput ? searchInput.value.trim() : "";
+    const rawFilter = searchInput ? searchInput.value : "";
+    const filter = rawFilter.trim();
     const tokens = parseFilterTokens(filter);
     const hasInvalidToken = tokens.some((token) => !isGpuModelToken(token));
+    if (!tokens.length && rawFilter && !filter) {
+      alert("請輸入顯卡型號，空白無法搜尋。");
+      scrapeButton.disabled = false;
+      scrapeButton.textContent = originalLabel;
+      return;
+    }
     if (tokens.length && hasInvalidToken) {
       alert("請輸入正確的顯卡型號，例如 RTX 5080、RX 7900 XT、ARC A770。");
       scrapeButton.disabled = false;
