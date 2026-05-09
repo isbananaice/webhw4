@@ -20,6 +20,15 @@ let cachedRows = [];
 let tablePage = 1;
 const tablePageSize = 10;
 
+const parseFilterTokens = (value) =>
+  String(value || "")
+    .split(/[\s,\/]+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+
+const isGpuModelToken = (token) =>
+  /^(?:rtx|rx)?\d{3,5}(?:ti|xt|super)?$/i.test(token);
+
 const parseDateValue = (value) => {
   if (!value) {
     return null;
@@ -424,7 +433,16 @@ if (scrapeButton) {
     scrapeButton.disabled = true;
     scrapeButton.textContent = "抓取中...";
     const filter = searchInput ? searchInput.value.trim() : "";
-    const payload = filter ? { filter } : {};
+    const tokens = parseFilterTokens(filter);
+    const hasInvalidToken = tokens.some((token) => !isGpuModelToken(token));
+    if (hasInvalidToken) {
+      alert("請只輸入顯卡型號（例如：5070、5080、5090）。");
+      scrapeButton.disabled = false;
+      scrapeButton.textContent = originalLabel;
+      return;
+    }
+
+    const payload = tokens.length ? { filter: tokens.join(" ") } : {};
 
     try {
       const response = await fetch("/api/scrape", {

@@ -25,6 +25,7 @@ Build and maintain a local GPU price tracker (Express + SQLite) with:
    - Inserts today's price rows while avoiding exact-duplicate entries.
 - Frontend controls:
    - Manual scrape input (`search-input`) to pass simple model keywords (e.g., `5070 5080 5090`).
+   - Manual scrape input rejects non-GPU-model tokens before sending a scrape request.
    - Chart controls: `range-start`, `range-end`, `chart-filter`, and `chart-agg` (min/avg/max).
    - Table filter: `table-filter` for client-side row filtering.
    - Table pagination: 10 rows per page with prev/next and page jump controls.
