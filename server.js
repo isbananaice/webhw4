@@ -62,7 +62,8 @@ const normalizeModelToken = (value) =>
     .toUpperCase();
 
 const isModelToken = (value) =>
-  /^(?:RTX|RX)?\d{3,5}(?:TI|XT|SUPER)?$/i.test(value);
+  /^(?:RTX|RX|GTX)?\d{3,5}(?:TI|XT|SUPER)?$/i.test(value) ||
+  /^(?:ARC)?[AB]\d{2,3}$/i.test(value);
 
 const buildModelRegex = (token) => {
   const normalized = normalizeModelToken(token);
@@ -70,13 +71,19 @@ const buildModelRegex = (token) => {
     return null;
   }
 
-  const match = normalized.match(/^(RTX|RX)?(\d{3,5})(TI|XT|SUPER)?$/i);
+  const arcMatch = normalized.match(/^(?:ARC)?([AB])(\d{2,3})$/i);
+  if (arcMatch) {
+    const [, series, digits] = arcMatch;
+    return new RegExp(`ARC\s*${series}\s*${digits}`, "i");
+  }
+
+  const match = normalized.match(/^(RTX|RX|GTX)?(\d{3,5})(TI|XT|SUPER)?$/i);
   if (!match) {
     return null;
   }
 
   const [, prefix, digits, suffix] = match;
-  const prefixPart = prefix ? prefix : "(?:RTX|RX)";
+  const prefixPart = prefix ? prefix : "(?:RTX|RX|GTX)";
   const suffixPart = suffix ? `\s*${suffix}` : "(?:\s*(?:TI|XT|SUPER))?";
   return new RegExp(`${prefixPart}\s*${digits}${suffixPart}`, "i");
 };
