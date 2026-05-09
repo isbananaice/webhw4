@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>顯卡物價軌道站</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">顯卡行情追蹤</p>
+        <h1>顯卡物價軌道站</h1>
+        <p class="subtitle">記錄每日顯卡價格，觀察價格曲線的變化。</p>
+      </header>
+
+      <section class="panel">
+        <h2>新增物價資料</h2>
+        <form id="price-form" class="form-grid">
+          <label class="field">
+            <span>日期</span>
+            <input type="date" id="price-date" required />
+          </label>
+          <label class="field">
+            <span>商品名稱</span>
+            <input type="text" id="price-name" placeholder="RTX 5080 Founders" required />
+          </label>
+          <label class="field">
+            <span>商品價格</span>
+            <input type="number" id="price-value" min="0" step="1" placeholder="34990" required />
+          </label>
+          <button type="submit" class="primary">儲存資料</button>
+          <div class="form-actions">
+            <label class="field inline-field">
+              <span>搜尋顯卡型號</span>
+              <input type="text" id="search-input" placeholder="5070 / 5080 / 5090" />
+            </label>
+            <button type="button" id="scrape-btn" class="secondary">抓取最新價格</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>物價歷史</h2>
+            <p class="muted">可調整時間軸範圍，查看價格趨勢。</p>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-controls">
+            <label class="field">
+              <span>起始日期</span>
+              <input type="date" id="range-start" />
+            </label>
+            <label class="field">
+              <span>結束日期</span>
+              <input type="date" id="range-end" />
+            </label>
+            <label class="field">
+              <span>顯卡型號</span>
+              <input type="text" id="chart-filter" placeholder="5070 / 5080 / 5090" />
+            </label>
+            <label class="field">
+              <span>價格統計</span>
+              <select id="chart-agg">
+                <option value="min">最低價</option>
+                <option value="avg" selected>平均價</option>
+                <option value="max">最高價</option>
+              </select>
+            </label>
+            <button type="button" class="secondary" id="range-reset">重設範圍</button>
+          </div>
+          <canvas id="price-chart" height="320"></canvas>
+          <p class="muted chart-note">折線圖會依時間軸範圍顯示價格趨勢。</p>
+        </div>
+        <div class="table-wrap">
+          <div class="table-controls">
+            <label class="field">
+              <span>顯卡型號篩選</span>
+              <input type="text" id="table-filter" placeholder="輸入型號關鍵字" />
+            </label>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>日期</th>
+                <th>商品</th>
+                <th class="num">價格</th>
+                <th class="action">操作</th>
+              </tr>
+            </thead>
+            <tbody id="price-table"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
